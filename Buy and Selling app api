@@ -1,0 +1,29 @@
+import pyrebase
+from firebase_admin import db
+
+config = {
+  "apiKey": "AIzaSyCPYEjH0XJzbMARglOqtMJa0QW1DgGQ",
+  "authDomain": "fireapp-8a37a.firebaseapp.com",
+  "databaseURL": "https://fireapp-8a37a.firebaseio.com",
+  "projectId": "fireapp-8a37a",
+  "storageBucket": "fireapp-8a37a.appspot.com",
+  "messagingSenderId": "593560484305",
+  "appId": "1:593560484305:web:8b2dc652f42921deeec8f0",
+  "measurementId": "G-J38QTVJH3B"
+}
+
+#l=[]
+firebase = pyrebase.initialize_app(config)
+db = firebase.database()
+#ref = db.reference('https://console.firebase.google.com/u/1/project/fireapp-8a37a/database/fireapp-8a37a/data')
+#db.child("test").push({"test1":"gfhf"})
+#db.child("test").child("test1").update({"test2":"abc"})
+#db.child("test").child("test1").update({"test3":"jllj"})
+data=db.get()
+
+for user in data.each():
+    print(user.key()) # Morty
+    print(user.val()) # {name": "Mortimer 'Morty' Smith"}
+
+
+#l.append((data.val(
