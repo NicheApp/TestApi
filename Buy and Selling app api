@@ -1,29 +1,69 @@
+from flask import Flask ,jsonify, request, make_response
+import jwt
+import datetime
+from functools import wraps
 import pyrebase
-from firebase_admin import db
-
 config = {
-  "apiKey": "AIzaSyCPYEjH0XJzbMARglOqtMJa0QW1DgGQ",
-  "authDomain": "fireapp-8a37a.firebaseapp.com",
-  "databaseURL": "https://fireapp-8a37a.firebaseio.com",
-  "projectId": "fireapp-8a37a",
-  "storageBucket": "fireapp-8a37a.appspot.com",
-  "messagingSenderId": "593560484305",
-  "appId": "1:593560484305:web:8b2dc652f42921deeec8f0",
-  "measurementId": "G-J38QTVJH3B"
+  "apiKey": "AIzaSyCxyhCnLdZ4Ol_WXhHGEP2j-hPcY",
+  "authDomain": "buy-and-selling-7137d.firebaseapp.com",
+  "databaseURL": "https://buy-and-selling-7137d.firebaseio.com",
+  "projectId": "buy-and-selling-7137d",
+  "storageBucket": "buy-and-selling-7137d.appspot.com",
+  "messagingSenderId": "246130623636",
+  "appId": "1:246130623636:web:c2a35f4127a12e38542081",
+  "measurementId": "G-6JZXXTCN8R"
 }
 
-#l=[]
-firebase = pyrebase.initialize_app(config)
-db = firebase.database()
-#ref = db.reference('https://console.firebase.google.com/u/1/project/fireapp-8a37a/database/fireapp-8a37a/data')
-#db.child("test").push({"test1":"gfhf"})
-#db.child("test").child("test1").update({"test2":"abc"})
-#db.child("test").child("test1").update({"test3":"jllj"})
-data=db.get()
 
+app=Flask(__name__)
+l=[]
+app.config['SECRET_KEY']='thisissecretkey'
+firebase = pyrebase.initialize_app(config)#to connect with firebase
+db = firebase.database()#to connect with firebase database
+data=db.get()#to get the data from database
 for user in data.each():
-    print(user.key()) # Morty
-    print(user.val()) # {name": "Mortimer 'Morty' Smith"}
+    l.append(user.key())
+    l.append(user.val())
+   
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token=request.args.get('token')
+        if not token:
+            return jsonify({'messege':'token is missing'}),403
+        try:
+            data = jwt.decode(token,app.config['SECRET_KEY'])
+        except:
+            return jsonify({'messege':'invalide token'}),403     
+        return f(*args, **kwargs)
+    return decorated
+    
+ 
+@app.route('/unprotected')
+def unprotected():
+    return jsonify({'msg':'anyone can see this'})
+    
+@app.route('/protected')
+@token_required
+def protected():
+    return jsonify({'msg':l})
 
+@app.route('/login')
+def login():
+    auth=request.authorization
+    if auth and auth.password == 'password':
+        token=jwt.encode({'user':auth.username,'exp': datetime.datetime.utcnow() + datetime.timedelta(days=2) },app.config['SECRET_KEY'])
+        
+        return jsonify({'token':token.decode('UTF-8')})
+ 
+        
+    return make_response('Could not verify!', 401, {'WWW-Authenticate' : 'Basic realm="Login Required"'})
 
-#l.append((data.val(
+    
+
+     
+    
+   # return make_response('Could not verify!', 401, {'WWW.-Authenticate' : 'Basic realm="Login Required"'})
+     
+if __name__=='__main__':
+    app.run(debug=True)    
